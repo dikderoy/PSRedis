@@ -4,18 +4,18 @@
 namespace PSRedis\Client\Adapter;
 
 
+use PSRedis\Client\Adapter\Predis\Mock\MockedPredisClientCreatorWithFailingRedisConnection;
 use PSRedis\Client\Adapter\Predis\Mock\MockedPredisClientCreatorWithMasterAddress;
 use PSRedis\Client\Adapter\Predis\Mock\MockedPredisClientCreatorWithNoMasterAddress;
 use PSRedis\Client\Adapter\Predis\Mock\MockedPredisClientCreatorWithSentinelOffline;
-use PSRedis\Client;
-use PSRedis\Client\Adapter\Predis\Mock\MockedPredisClientCreatorWithFailingRedisConnection;
+use RedisGuard\Client;
 
 class PredisClientAdapterTest extends \PHPUnit_Framework_TestCase
 {
     public function testThatAPredisClientIsCreatedOnConnect()
     {
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithNoMasterAddress(), Client::TYPE_SENTINEL);
-        $clientAdapter->setIpAddress('127.0.0.1');
+        $clientAdapter->setHost('127.0.0.1');
         $clientAdapter->setPort(4545);
         $clientAdapter->connect();
 
@@ -25,29 +25,29 @@ class PredisClientAdapterTest extends \PHPUnit_Framework_TestCase
     public function testThatMasterIsOfCorrectType()
     {
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithMasterAddress(), Client::TYPE_SENTINEL);
-        $clientAdapter->setIpAddress('127.0.0.1');
+        $clientAdapter->setHost('127.0.0.1');
         $clientAdapter->setPort(4545);
         $master = $clientAdapter->getMaster('test');
 
-        $this->assertInstanceOf('\\PSRedis\\Client', $master, 'The master returned should be of type \\PSRedis\\Client');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $master, 'The master returned should be of type \\RedisGuard\\Client');
     }
 
     public function testThatConnectionToAnOfflineSentinelThrowsAnException()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConnectionError');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConnectionError');
 
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithSentinelOffline(), Client::TYPE_SENTINEL);
-        $clientAdapter->setIpAddress('127.0.0.1');
+        $clientAdapter->setHost('127.0.0.1');
         $clientAdapter->setPort(4545);
         $clientAdapter->connect();
     }
 
     public function testThatExceptionIsThrownWhenMasterIsUnknownToSentinel()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\SentinelError', 'The sentinel does not know the master address');
+        $this->setExpectedException('\\RedisGuard\\Exception\\SentinelError', 'The sentinel does not know the master address');
 
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithNoMasterAddress(), Client::TYPE_SENTINEL);
-        $clientAdapter->setIpAddress('127.0.0.1');
+        $clientAdapter->setHost('127.0.0.1');
         $clientAdapter->setPort(4545);
 
         $clientAdapter->getMaster('test');
@@ -56,7 +56,7 @@ class PredisClientAdapterTest extends \PHPUnit_Framework_TestCase
     public function testThatTheAdapterReturnsTheRoleOfTheServer()
     {
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithMasterAddress(), Client::TYPE_SENTINEL);
-        $clientAdapter->setIpAddress('127.0.0.1');
+        $clientAdapter->setHost('127.0.0.1');
         $clientAdapter->setPort(4545);
 
         $this->assertEquals('sentinel', $clientAdapter->getRole(), 'The server we are connected to is a sentinel');
@@ -72,9 +72,8 @@ class PredisClientAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testThatConnectionErrorsAreProxied()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConnectionError');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConnectionError');
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithFailingRedisConnection(), Client::TYPE_REDIS);
         $clientAdapter->get('test');
     }
 }
- 

@@ -1,26 +1,40 @@
 {
-    "name": "sparkcentral/psredis",
-    "type": "library",
-    "description": "Sentinel client for the popular php redis client",
-    "keywords": ["nosql", "redis", "predis", "sentinel"],
-    "authors": [
-        {
-            "name": "James Cauwelier",
-            "email": "james@sparkcentral.com",
-            "homepage": "http://www.sparkcentral.com",
-            "role": "Developer"
-        }
-    ],
-    "license": "MIT",
-    "require": {
-        "php": ">=5.3.2",
-        "predis/predis": ">=1.0"
+  "name": "dikderoy/redis-guard",
+  "type": "library",
+  "description": "Sentinel wrapper for Redis clients",
+  "keywords": [
+    "nosql",
+    "redis",
+    "sentinel"
+  ],
+  "authors": [
+    {
+      "name": "James Cauwelier",
+      "email": "james@sparkcentral.com",
+      "homepage": "http://www.sparkcentral.com",
+      "role": "Original Library Developer"
     },
-    "require-dev": {
-        "phpunit/phpunit": "~3.7",
-        "phake/phake": "@stable"
-    },
-    "autoload": {
-        "psr-0": {"Sentinel": "lib/", "PSRedis": "lib/"}
+    {
+      "name": "Roman Bulgakov",
+      "email": "dik.deroy@gmail.com",
+      "role": "Fork Developer"
     }
+  ],
+  "license": "MIT",
+  "require": {
+    "php": ">=5.5"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~3.7",
+    "phake/phake": "@stable",
+    "yiisoft/yii": "~1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "RedisGuard\\": [
+        "src/",
+        "yii-bundle-src/"
+      ]
+    }
+  }
 }

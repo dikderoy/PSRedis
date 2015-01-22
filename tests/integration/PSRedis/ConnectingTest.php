@@ -4,6 +4,8 @@
 namespace PSRedis;
 
 
+use RedisGuard\Client;
+
 class ConnectingTest extends Redis_Integration_TestCase
 {
     public function setUp()
@@ -58,4 +60,3 @@ class ConnectingTest extends Redis_Integration_TestCase
         $this->assertTrue($slave->isSlave(), 'Verify the slave is a slave');
     }
 }
- 

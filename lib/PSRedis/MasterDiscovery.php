@@ -2,13 +2,14 @@
 
 namespace PSRedis;
 
-use PSRedis\MasterDiscovery\BackoffStrategy\None;
-use PSRedis\MasterDiscovery\BackoffStrategy;
-use PSRedis\Exception\ConfigurationError;
-use PSRedis\Exception\ConnectionError;
-use PSRedis\Exception\InvalidProperty;
-use PSRedis\Exception\RoleError;
-use PSRedis\Exception\SentinelError;
+use RedisGuard\Client;
+use RedisGuard\Exception\ConfigurationError;
+use RedisGuard\Exception\ConnectionError;
+use RedisGuard\Exception\InvalidProperty;
+use RedisGuard\Exception\RoleError;
+use RedisGuard\Exception\SentinelError;
+use RedisGuard\Strategy\IBackOffStrategy;
+use RedisGuard\Strategy\NoBackOff;
 
 /**
  * Class MasterDiscovery
@@ -34,7 +35,7 @@ class MasterDiscovery
 
     /**
      * The strategy to use when none of the sentinels could be reached.  Should we try again or leave it at that?
-     * @var MasterDiscovery\BackoffStrategy\None
+     * @var \RedisGuard\Strategy\NoBackOff
      */
     private $backoffStrategy;
 
@@ -54,13 +55,13 @@ class MasterDiscovery
         $this->name = $name;
 
         // by default we don't implement a backoff
-        $this->backoffStrategy = new None();
+        $this->backoffStrategy = new NoBackOff();
     }
 
     /**
-     * @param BackoffStrategy $backoffStrategy
+     * @param IBackOffStrategy $backoffStrategy
      */
-    public function setBackoffStrategy(BackoffStrategy $backoffStrategy)
+    public function setBackoffStrategy(IBackOffStrategy $backoffStrategy)
     {
         $this->backoffStrategy = $backoffStrategy;
     }
@@ -91,8 +92,10 @@ class MasterDiscovery
 
     /**
      * Validation method for the name of the sentinels and redis collection
-     * @param $name
-     * @throws Exception\InvalidProperty
+     *
+*@param $name
+     *
+*@throws \RedisGuard\Exception\InvalidProperty
      */
     private function guardThatTheNameIsNotBlank($name)
     {
@@ -104,8 +107,8 @@ class MasterDiscovery
     /**
      * Actual discovery logic to find out the IP and port of the master node
      * @return Client\ClientAdapter
-     * @throws Exception\ConnectionError
-     * @throws Exception\ConfigurationError
+     * @throws \RedisGuard\Exception\ConnectionError
+     * @throws \RedisGuard\Exception\ConfigurationError
      */
     public function getMaster()
     {
@@ -141,7 +144,7 @@ class MasterDiscovery
             }
 
             if ($this->backoffStrategy->shouldWeTryAgain()) {
-                $backoffInMicroseconds = $this->backoffStrategy->getBackoffInMicroSeconds();
+                $backoffInMicroseconds = $this->backoffStrategy->getBackOffInMicroSeconds();
                 if (!empty($this->backoffObserver)) {
                     call_user_func($this->backoffObserver, $backoffInMicroseconds);
                 }
@@ -160,4 +163,4 @@ class MasterDiscovery
     {
         $this->backoffObserver = $observer;
     }
-} 
+}

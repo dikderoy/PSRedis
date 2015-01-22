@@ -2,8 +2,9 @@
 
 namespace PSRedis;
 
-use PSRedis\Exception\ConnectionError;
 use PSRedis\Client\Adapter\NullClientAdapter;
+use RedisGuard\Client;
+use RedisGuard\Exception\ConnectionError;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -12,7 +13,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     private function mockOfflineClientAdapter()
     {
-        $redisClientAdapter = \Phake::mock('\\PSRedis\\Client\\Adapter\\PredisClientAdapter');
+        $redisClientAdapter = \Phake::mock('\\RedisGuard\\Client\\Adapter\\PredisClientAdapter');
         \Phake::when($redisClientAdapter)->connect()->thenThrow(
             new ConnectionError(sprintf('Could not connect to sentinel at %s:%d', $this->ipAddress, $this->port))
         );
@@ -23,7 +24,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     private function mockOnlineClientAdapter()
     {
-        $redisClientAdapter = \Phake::mock('\\PSRedis\\Client\\Adapter\\PredisClientAdapter');
+        $redisClientAdapter = \Phake::mock('\\RedisGuard\\Client\\Adapter\\PredisClientAdapter');
         \Phake::when($redisClientAdapter)->isConnected()->thenReturn(true);
 
         return $redisClientAdapter;
@@ -47,10 +48,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     private function mockClientAdapterForRole($role, $client = null)
     {
         if (empty($client)) {
-            $client = \Phake::mock('\\PSRedis\\Client');
+            $client = \Phake::mock('\\RedisGuard\\Client');
         }
 
-        $redisClientAdapter = \Phake::mock('\\PSRedis\\Client\\Adapter\\PredisClientAdapter');
+        $redisClientAdapter = \Phake::mock('\\RedisGuard\\Client\\Adapter\\PredisClientAdapter');
         \Phake::when($redisClientAdapter)->isConnected()->thenReturn(true);
         \Phake::when($redisClientAdapter)->getMaster('test')->thenReturn($client);
         \Phake::when($redisClientAdapter)->getRole()->thenReturn(array($role));
@@ -63,7 +64,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testSentinelHasIpAddress()
     {
         $sentinel = new Client($this->ipAddress, $this->port);
-        $this->assertEquals($this->ipAddress, $sentinel->getIpAddress(), 'A sentinel location is identified by ip address');
+        $this->assertEquals($this->ipAddress, $sentinel->getHost(), 'A sentinel location is identified by ip address');
     }
 
     public function testSentinelHasPort()
@@ -75,13 +76,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testSentinelHasPredisAsStandardAdapter()
     {
         $sentinel = new Client($this->ipAddress, $this->port);
-        $this->assertAttributeInstanceOf('\\PSRedis\\Client\\Adapter\\PredisClientAdapter', 'clientAdapter', $sentinel, 'By default, the library uses predis to make connection with redis');
+        $this->assertAttributeInstanceOf('\\RedisGuard\\Client\\Adapter\\PredisClientAdapter', 'adapter', $sentinel, 'By default, the library uses predis to make connection with redis');
     }
 
     public function testSentinelAcceptsOtherAdapters()
     {
         $sentinel = new Client($this->ipAddress, $this->port, new NullClientAdapter());
-        $this->assertAttributeInstanceOf('\\PSRedis\\Client\\Adapter\\NullClientAdapter', 'clientAdapter', $sentinel, 'The used redis client adapter can be swapped');
+        $this->assertAttributeInstanceOf('\\RedisGuard\\Client\\Adapter\\NullClientAdapter', 'adapter', $sentinel, 'The used redis client adapter can be swapped');
     }
 
     public function testThatFailureToConnectToSentinelsThrowsAnError()
@@ -120,12 +121,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $onlineClientAdapter = $this->mockOnlineClientAdapter();
         $sentinelNode = new Client($this->ipAddress, $this->port, $onlineClientAdapter);
-        $this->assertEquals($onlineClientAdapter, $sentinelNode->getClientAdapter(), 'A sentinel can return the client adapter');
+        $this->assertEquals($onlineClientAdapter, $sentinelNode->getAdapter(), 'A sentinel can return the client adapter');
     }
 
     public function testThatTheMasterReturnedComesFromClientAdapter()
     {
-        $masterClient = \Phake::mock('\\PSRedis\\Client');
+        $masterClient = \Phake::mock('\\RedisGuard\\Client');
         $masterClientAdapter = $this->mockClientAdapterForMaster($masterClient);
         $masterNode = new Client($this->ipAddress, $this->port, $masterClientAdapter);
         $this->assertEquals($masterClient, $masterNode->getMaster('test'), 'The redis client gets the master object from the client adapter');
@@ -180,4 +181,3 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('ok', $masterNode->get('test'), 'GET command is proxied');
     }
 }
- 

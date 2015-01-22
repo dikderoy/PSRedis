@@ -3,10 +3,10 @@
 namespace PSRedis;
 
 use PSRedis\Client\Adapter\Predis\Mock\MockedPredisClientCreatorWithNoMasterAddress;
-use PSRedis\MasterDiscovery\BackoffStrategy\Incremental;
-use PSRedis\Exception\ConnectionError;
 use PSRedis\Client\Adapter\PredisClientAdapter;
-use PSRedis\MasterDiscovery\BackoffStrategy\None;
+use RedisGuard\Client;
+use RedisGuard\Exception\ConnectionError;
+use RedisGuard\Strategy\IncrementalBackOff;
 
 class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 {
@@ -33,13 +33,13 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
     {
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithNoMasterAddress(), Client::TYPE_SENTINEL);
 
-        $redisClient = \Phake::mock('\\PSRedis\Client');
+        $redisClient = \Phake::mock('\\RedisGuard\Client');
         \Phake::when($redisClient)->getIpAddress()->thenReturn($this->onlineMasterIpAddress);
         \Phake::when($redisClient)->getPort()->thenReturn($this->onlineMasterPort);
         \Phake::when($redisClient)->isMaster()->thenReturn(true);
         \Phake::when($redisClient)->getRole()->thenReturn(Client::ROLE_MASTER);
 
-        $sentinelClient = \Phake::mock('\\PSRedis\\Client');
+        $sentinelClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($sentinelClient)->connect()->thenReturn(null);
         \Phake::when($sentinelClient)->getIpAddress()->thenReturn($this->onlineSentinelIpAddress);
         \Phake::when($sentinelClient)->getPort()->thenReturn($this->onlineSentinelPort);
@@ -50,11 +50,11 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return \PSRedis\Client
+     * @return \RedisGuard\Client
      */
     private function mockOfflineSentinel()
     {
-        $sentinelClient = \Phake::mock('\\PSRedis\\Client');
+        $sentinelClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($sentinelClient)->connect()->thenThrow(
             new ConnectionError(sprintf('Could not connect to sentinel at %s:%d', $this->offlineSentinelIpAddress, $this->offlineSentinelPort))
         );
@@ -65,18 +65,18 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return \PSRedis\Client
+     * @return \RedisGuard\Client
      */
     private function mockTemporaryOfflineSentinel()
     {
         // mock a master node
-        $masterNode = \Phake::mock('\\PSRedis\Client');
+        $masterNode = \Phake::mock('\\RedisGuard\Client');
         \Phake::when($masterNode)->getIpAddress()->thenReturn($this->onlineMasterIpAddress);
         \Phake::when($masterNode)->getPort()->thenReturn($this->onlineMasterPort);
         \Phake::when($masterNode)->isMaster()->thenReturn(true);
 
         // mock a sentinel client that is temporarily offline
-        $sentinelClient = \Phake::mock('\\PSRedis\\Client');
+        $sentinelClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($sentinelClient)->connect()
             ->thenThrow(
                 new ConnectionError(sprintf('Could not connect to sentinel at %s:%d', $this->onlineSentinelIpAddress, $this->onlineSentinelPort))
@@ -93,17 +93,17 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
     {
         $clientAdapter = new PredisClientAdapter(new MockedPredisClientCreatorWithNoMasterAddress(), Client::TYPE_SENTINEL);
 
-        $masterNodeSteppingDown = \Phake::mock('\\PSRedis\Client');
+        $masterNodeSteppingDown = \Phake::mock('\\RedisGuard\Client');
         \Phake::when($masterNodeSteppingDown)->getIpAddress()->thenReturn($this->onlineSteppingDownMasterIpAddress);
         \Phake::when($masterNodeSteppingDown)->getPort()->thenReturn($this->onlineSteppingDownMasterPort);
         \Phake::when($masterNodeSteppingDown)->isMaster()->thenReturn(false);
 
-        $masterNode = \Phake::mock('\\PSRedis\Client');
+        $masterNode = \Phake::mock('\\RedisGuard\Client');
         \Phake::when($masterNode)->getIpAddress()->thenReturn($this->onlineMasterIpAddress);
         \Phake::when($masterNode)->getPort()->thenReturn($this->onlineMasterPort);
         \Phake::when($masterNode)->isMaster()->thenReturn(true);
 
-        $sentinelClient = \Phake::mock('\\PSRedis\\Client');
+        $sentinelClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($sentinelClient)->connect()->thenReturn(null);
         \Phake::when($sentinelClient)->getIpAddress()->thenReturn($this->onlineSentinelIpAddress);
         \Phake::when($sentinelClient)->getPort()->thenReturn($this->onlineSentinelPort);
@@ -123,7 +123,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 
     public function testAMonitorSetNameCannotBeEmpty()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\InvalidProperty', 'A master discovery needs a valid name (sentinels can monitor more than 1 master)');
+        $this->setExpectedException('\\RedisGuard\\Exception\\InvalidProperty', 'A master discovery needs a valid name (sentinels can monitor more than 1 master)');
         new MasterDiscovery('');
     }
 
@@ -136,21 +136,21 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 
     public function testThatOnlySentinelClientObjectsCanBeAddedAsNode()
     {
-        $this->setExpectedException('\\PHPUnit_Framework_Error', 'Argument 1 passed to PSRedis\MasterDiscovery::addSentinel() must be an instance of PSRedis\Client');
+        $this->setExpectedException('\\PHPUnit_Framework_Error', 'Argument 1 passed to PSRedis\MasterDiscovery::addSentinel() must be an instance of RedisGuard\Client');
         $masterDiscovery = new MasterDiscovery($this->masterName);
         $masterDiscovery->addSentinel(new \StdClass());
     }
 
     public function testThatWeNeedNodesConfigurationToDiscoverAMaster()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConfigurationError', 'You need to configure and add sentinel nodes before attempting to fetch a master');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConfigurationError', 'You need to configure and add sentinel nodes before attempting to fetch a master');
         $masterDiscovery = new MasterDiscovery($this->masterName);
         $masterDiscovery->getMaster();
     }
 
     public function testThatMasterCannotBeFoundIfWeCannotConnectToSentinels()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConnectionError', 'All sentinels are unreachable');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConnectionError', 'All sentinels are unreachable');
         $sentinel1 = $this->mockOfflineSentinel();
         $sentinel2 = $this->mockOfflineSentinel();
         $masterDiscovery = new MasterDiscovery('all-fail');
@@ -161,7 +161,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 
     public function testThatSentinelNodeIsReturnedOnSuccessfulMasterDiscovery()
     {
-        $noBackoff = new Incremental(0, 1);
+        $noBackoff = new IncrementalBackOff(0, 1);
         $noBackoff->setMaxAttempts(1);
 
         $sentinel1 = $this->mockOfflineSentinel();
@@ -173,14 +173,14 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
         $masterDiscovery->addSentinel($sentinel2);
         $masterNode = $masterDiscovery->getMaster();
 
-        $this->assertInstanceOf('\\PSRedis\\Client', $masterNode, 'The master returned should be an instance of \\PSRedis\\Client');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $masterNode, 'The master returned should be an instance of \\RedisGuard\\Client');
         $this->assertEquals($this->onlineMasterIpAddress, $masterNode->getIpAddress(), 'The master node IP address returned should be the one of the online sentinel');
         $this->assertEquals($this->onlineMasterPort, $masterNode->getPort(), 'The master node IP port returned should be the one of the online sentinel');
     }
 
     public function testThatMasterStatusOfANodeIsCheckedAfterConnecting()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConnectionError', 'All sentinels are unreachable');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConnectionError', 'All sentinels are unreachable');
 
         $sentinel1 = $this->mockOnlineSentinelWithMasterSteppingDown();
         $sentinel2 = $this->mockOnlineSentinel();
@@ -192,7 +192,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 
     public function testThatABackoffIsAttempted()
     {
-        $backoffOnce = new Incremental(0, 1);
+        $backoffOnce = new IncrementalBackOff(0, 1);
         $backoffOnce->setMaxAttempts(2);
 
         $sentinel1 = $this->mockOfflineSentinel();
@@ -210,7 +210,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 
     public function testThatTheMasterHasTheCorrectRole()
     {
-        $noBackoff = new Incremental(0, 1);
+        $noBackoff = new IncrementalBackOff(0, 1);
         $noBackoff->setMaxAttempts(1);
 
         $sentinel1 = $this->mockOfflineSentinel();
@@ -229,7 +229,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
     {
         $this->observedBackoff = false;
 
-        $backoffOnce = new Incremental(0, 1);
+        $backoffOnce = new IncrementalBackOff(0, 1);
         $backoffOnce->setMaxAttempts(2);
 
         $sentinel1 = $this->mockOfflineSentinel();
@@ -256,7 +256,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
      */
     public function testThatABackoffStrategyIsResetWhenStartingTheMasterDiscovery()
     {
-        $backoff = new Incremental(0, 1);
+        $backoff = new IncrementalBackOff(0, 1);
         $backoff->setMaxAttempts(2);
 
         $sentinel1 = $this->mockOfflineSentinel();
@@ -277,8 +277,7 @@ class MasterDiscoveryTest extends \PHPUnit_Framework_TestCase
 
         // try to discover the master node
         $masterNode = $masterDiscovery->getMaster();
-        $this->assertInstanceOf('\\PSRedis\\Client', $masterNode, 'When backing off is reset on each discovery, we should have received the master node here');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $masterNode, 'When backing off is reset on each discovery, we should have received the master node here');
 
     }
 }
- 

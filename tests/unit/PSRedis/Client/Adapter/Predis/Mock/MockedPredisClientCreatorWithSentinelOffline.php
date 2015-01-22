@@ -20,10 +20,10 @@ class MockedPredisClientCreatorWithSentinelOffline
 
     public function createRedisClient(array $parameters = array())
     {
-        $mockedRedisClient = \Phake::mock('\\PSRedis\\Client');
+        $mockedRedisClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($mockedRedisClient)->isMaster()->thenReturn(false);
         \Phake::when($mockedRedisClient)->getMaster(\Phake::anyParameters())->thenReturn($mockedRedisClient);
 
         return $mockedRedisClient;
     }
-} 
+}

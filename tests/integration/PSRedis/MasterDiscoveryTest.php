@@ -6,7 +6,8 @@ namespace PSRedis;
 
 use PSRedis\Client\Adapter\Predis\PredisClientCreator;
 use PSRedis\Client\Adapter\PredisClientAdapter;
-use PSRedis\MasterDiscovery\BackoffStrategy\Incremental;
+use RedisGuard\Client;
+use RedisGuard\Strategy\IncrementalBackOff;
 
 require_once __DIR__ . '/Redis_Integration_TestCase.php';
 
@@ -42,8 +43,8 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
 
         $master = $masterDiscovery->getMaster();
 
-        $this->assertInstanceOf('\\PSRedis\\Client', $master, 'Master is returned after successful master discovery');
-        $this->assertAttributeEquals('192.168.50.40', 'ipAddress', $master, 'The master ip returned is correct');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $master, 'Master is returned after successful master discovery');
+        $this->assertAttributeEquals('192.168.50.40', 'host', $master, 'The master ip returned is correct');
         $this->assertAttributeEquals('6379', 'port', $master, 'The master ip returned is correct');
     }
 
@@ -75,14 +76,14 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
         $master = $masterDiscovery->getMaster();
 
         $this->assertFalse($sentinel1->isConnected(), 'The first sentinel is offline');
-        $this->assertInstanceOf('\\PSRedis\\Client', $master, 'Master is returned after successful master discovery');
-        $this->assertAttributeEquals('192.168.50.40', 'ipAddress', $master, 'The master ip returned is correct');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $master, 'Master is returned after successful master discovery');
+        $this->assertAttributeEquals('192.168.50.40', 'host', $master, 'The master ip returned is correct');
         $this->assertAttributeEquals('6379', 'port', $master, 'The master ip returned is correct');
     }
 
     public function testDiscoveryWithoutBackoffFailsWithSentinelsUnreachable()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConnectionError', 'All sentinels are unreachable');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConnectionError', 'All sentinels are unreachable');
 
         // disable sentinel on all nodes
         $this->disableSentinelAt('192.168.50.40');
@@ -143,7 +144,7 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
         $masterDiscovery->addSentinel($sentinel3);
 
         // configure a backoff strategy
-        $incrementalBackoff = new Incremental(500, 1.5);
+        $incrementalBackoff = new IncrementalBackOff(500, 1.5);
         $incrementalBackoff->setMaxAttempts(10);
         $masterDiscovery->setBackoffStrategy($incrementalBackoff);
         $masterDiscovery->setBackoffObserver(array($this, 'enableAllSentinels'));
@@ -160,8 +161,8 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
 
         // master discovery returned a client to the correct node
 
-        $this->assertInstanceOf('\\PSRedis\\Client', $master, 'Master is returned after successful master discovery');
-        $this->assertAttributeEquals('192.168.50.40', 'ipAddress', $master, 'The master ip returned is correct');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $master, 'Master is returned after successful master discovery');
+        $this->assertAttributeEquals('192.168.50.40', 'host', $master, 'The master ip returned is correct');
         $this->assertAttributeEquals('6379', 'port', $master, 'The master ip returned is correct');
 
     }
@@ -175,7 +176,7 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
 
     public function testDiscoveryWithBackoffFailsWhenSentinelsStayOffline()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConnectionError', 'All sentinels are unreachable');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConnectionError', 'All sentinels are unreachable');
 
         // disable sentinel on all nodes
         $this->disableSentinelAt('192.168.50.40');
@@ -204,7 +205,7 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
         $masterDiscovery->addSentinel($sentinel3);
 
         // configure a backoff strategy
-        $incrementalBackoff = new Incremental(500, 1.5);
+        $incrementalBackoff = new IncrementalBackOff(500, 1.5);
         $incrementalBackoff->setMaxAttempts(5);
         $masterDiscovery->setBackoffStrategy($incrementalBackoff);
 
@@ -212,4 +213,3 @@ class MasterDiscoveryTest extends Redis_Integration_TestCase
         $master = $masterDiscovery->getMaster();
     }
 }
- 

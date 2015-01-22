@@ -5,7 +5,7 @@ namespace PSRedis\Client\Adapter\Predis\Mock;
 
 
 use PSRedis\Client\Adapter\Predis\PredisClientFactory;
-use PSRedis\Client;
+use RedisGuard\Client;
 
 class MockedPredisClientCreatorWithMasterAddress
     extends AbstractMockedPredisClientCreator
@@ -24,7 +24,7 @@ class MockedPredisClientCreatorWithMasterAddress
 
     public function createRedisClient(array $parameters = array())
     {
-        $mockedRedisClient = \Phake::mock('\\PSRedis\\Client');
+        $mockedRedisClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($mockedRedisClient)->isMaster()->thenReturn(false);
         \Phake::when($mockedRedisClient)->getMaster(\Phake::anyParameters())->thenReturn($mockedRedisClient);
         \Phake::when($mockedRedisClient)->set('test', 'ok')->thenReturn(true);
@@ -32,4 +32,4 @@ class MockedPredisClientCreatorWithMasterAddress
 
         return $mockedRedisClient;
     }
-} 
+}

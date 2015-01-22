@@ -4,7 +4,7 @@
 namespace PSRedis\Client\Adapter\Predis\Mock;
 
 use PSRedis\Client\Adapter\Predis\PredisClientFactory;
-use PSRedis\Client;
+use RedisGuard\Client;
 
 class MockedPredisClientCreatorWithFailingRedisConnection
     extends AbstractMockedPredisClientCreator
@@ -25,7 +25,7 @@ class MockedPredisClientCreatorWithFailingRedisConnection
     {
         $mockedConnectionException = \Phake::mock('Predis\\Connection\\ConnectionException');
 
-        $mockedRedisClient = \Phake::mock('\\PSRedis\\Client');
+        $mockedRedisClient = \Phake::mock('\\RedisGuard\\Client');
         \Phake::when($mockedRedisClient)->isMaster()->thenReturn(false);
         \Phake::when($mockedRedisClient)->getMaster(\Phake::anyParameters())->thenReturn($mockedRedisClient);
         \Phake::when($mockedRedisClient)->set(\Phake::anyParameters())->thenThrow($mockedConnectionException);
@@ -33,4 +33,4 @@ class MockedPredisClientCreatorWithFailingRedisConnection
 
         return $mockedRedisClient;
     }
-} 
+}

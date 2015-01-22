@@ -12,7 +12,7 @@ use Predis\Command\Command;
  * Custom Predis command to find out the role of the node connected to (slave, master, sentinel) with some contextual
  * information added.
  *
- * @package PSRedis\Client\Adapter\Predis\Command
+ * @package RedisGuard\Client\Adapter\Predis\Command
  * @link http://redis.io/commands/role
  */
 class RoleCommand
@@ -22,4 +22,4 @@ class RoleCommand
     {
         return 'ROLE';
     }
-} 
+}

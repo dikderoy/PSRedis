@@ -4,7 +4,7 @@
 namespace PSRedis\Client\Adapter\Predis\Mock;
 
 
-use PSRedis\Client;
+use RedisGuard\Client;
 
 abstract class AbstractMockedPredisClientCreator
 {
@@ -18,4 +18,4 @@ abstract class AbstractMockedPredisClientCreator
                 return $this->createSentinelClient($parameters);
         }
     }
-} 
+}

@@ -11,7 +11,7 @@ use Predis\Command\Command;
  *
  * Custom Predis command to use the SENTINEL command
  *
- * @package PSRedis\Client\Adapter\Predis\Command
+ * @package RedisGuard\Client\Adapter\Predis\Command
  * @see http://redis.io/topics/sentinel Contains more information on the sentinel API.
  */
 class SentinelCommand
@@ -24,4 +24,4 @@ class SentinelCommand
     {
         return 'SENTINEL';
     }
-} 
+}

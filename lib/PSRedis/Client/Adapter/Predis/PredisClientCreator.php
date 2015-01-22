@@ -4,15 +4,15 @@
 namespace PSRedis\Client\Adapter\Predis;
 
 
-use PSRedis\Client;
-use PSRedis\Exception\ConfigurationError;
+use RedisGuard\Client;
+use RedisGuard\Exception\ConfigurationError;
 
 /**
  * Class PredisClientCreator
  *
  * Factory to create the Predis clients that allow us to talk to Redis and Sentinel nodes.
  *
- * @package PSRedis\Client\Adapter\Predis
+ * @package RedisGuard\Client\Adapter\Predis
  */
 class PredisClientCreator
     implements PredisClientFactory
@@ -34,10 +34,10 @@ class PredisClientCreator
     {
         $predisClient = new \Predis\Client($parameters);
         $predisClient->getProfile()->defineCommand(
-            'sentinel', '\\PSRedis\\Client\\Adapter\\Predis\\Command\\SentinelCommand'
+            'sentinel', '\\RedisGuard\\Client\\Adapter\\Predis\\Command\\SentinelCommand'
         );
         $predisClient->getProfile()->defineCommand(
-            'role', '\\PSRedis\\Client\\Adapter\\Predis\\Command\\RoleCommand'
+            'role', '\\RedisGuard\\Client\\Adapter\\Predis\\Command\\RoleCommand'
         );
 
         return $predisClient;
@@ -47,9 +47,9 @@ class PredisClientCreator
     {
         $predisClient = new \Predis\Client($parameters);
         $predisClient->getProfile()->defineCommand(
-            'role', '\\PSRedis\\Client\\Adapter\\Predis\\Command\\RoleCommand'
+            'role', '\\RedisGuard\\Client\\Adapter\\Predis\\Command\\RoleCommand'
         );
 
         return $predisClient;
     }
-} 
+}

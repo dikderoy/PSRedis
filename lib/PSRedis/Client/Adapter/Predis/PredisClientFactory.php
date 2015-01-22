@@ -8,9 +8,9 @@ namespace PSRedis\Client\Adapter\Predis;
  * Creates the actual clients to talk to Redis and Sentinel nodes with.  This allows us to mock the objects created
  * in order to unit test the library
  *
- * @package PSRedis\Client\Adapter\Predis
+ * @package RedisGuard\Client\Adapter\Predis
  */
 interface PredisClientFactory
 {
     public function createClient($clientType, array $parameters = array());
-} 
+}

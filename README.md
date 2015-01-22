@@ -52,16 +52,16 @@ here.
 // configuration of $masterDiscovery
 $masterDiscovery = ...
 
-// using the $masterDiscovery as a dependency in an Highly Available Client (HAClient)
-$HAClient = new HAClient($masterDiscovery);
-$HAClient->set('test', 'ok');
-$test = $HAClient->get('test');
+// using the $masterDiscovery as a dependency in an Highly Available Client (HighAvailabilityClient)
+$HighAvailabilityClient = new HighAvailabilityClient($masterDiscovery);
+$HighAvailabilityClient->set('test', 'ok');
+$test = $HighAvailabilityClient->get('test');
 ```
 
 ### Customizing the adapter
 
 You can choose what kind of client adapter to use or even write your own.  If you write your own you need to make sure
-you implement the **\PSRedis\Client\ClientAdapter** interface.
+you implement the **\RedisGuard\Client\IClientAdapter** interface.
 
 ```php
 // we need a factory to create the clients
@@ -69,14 +69,14 @@ $clientFactory = new PredisClientCreator();
 
 // we need an adapter for each sentinel client too!
 
-$clientAdapter = new PredisClientAdapter($clientFactory, Client::TYPE_SENTINEL);
-$sentinel1 = new Client('192.168.50.40', '26379', $clientAdapter);
+$adapter = new PredisClientAdapter($clientFactory, Client::TYPE_SENTINEL);
+$sentinel1 = new Client('192.168.50.40', '26379', $adapter);
 
-$clientAdapter = new PredisClientAdapter($clientFactory, Client::TYPE_SENTINEL);
-$sentinel2 = new Client('192.168.50.41', '26379', $clientAdapter);
+$adapter = new PredisClientAdapter($clientFactory, Client::TYPE_SENTINEL);
+$sentinel2 = new Client('192.168.50.41', '26379', $adapter);
 
-$clientAdapter = new PredisClientAdapter($clientFactory, Client::TYPE_SENTINEL);
-$sentinel3 = new Client('192.168.50.30', '26379', $clientAdapter);
+$adapter = new PredisClientAdapter($clientFactory, Client::TYPE_SENTINEL);
+$sentinel3 = new Client('192.168.50.30', '26379', $adapter);
 
 // now we can configure the master name and the sentinel nodes
 
@@ -93,7 +93,7 @@ $master = $masterDiscovery->getMaster();
 ### Configuring backoff
 
 When we fail to discover the location of the master, we need to back off and try again.  The back off mechanism is
-configurable and you can implement your own by implementing the **\PSRedis\Client\BackoffStrategy**
+configurable and you can implement your own by implementing the **\RedisGuard\Client\BackoffStrategy**
 
 Here is an example using the incremental backoff strategy:
 
@@ -103,7 +103,7 @@ $masterDiscovery = new MasterDiscovery('integrationtests');
 $masterDiscovery->addSentinel($sentinel);
 
 // create a backoff strategy (half a second initially and increment with half of the backoff on each succesive try)
-$incrementalBackoff = new Incremental(500, 1.5);
+$incrementalBackoff = new IncrementalBackOff(500, 1.5);
 $incrementalBackoff->setMaxAttempts(10);
 
 // configure the master discovery with this backoff strategy

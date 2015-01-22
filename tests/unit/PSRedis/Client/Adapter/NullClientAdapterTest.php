@@ -4,7 +4,7 @@
 namespace PSRedis\Client\Adapter;
 
 
-use PSRedis\Client;
+use RedisGuard\Client;
 
 class NullClientAdapterTest extends \PHPUnit_Framework_TestCase
 {
@@ -21,7 +21,7 @@ class NullClientAdapterTest extends \PHPUnit_Framework_TestCase
         $clientAdapter = new NullClientAdapter();
         $master = $clientAdapter->getMaster('test');
 
-        $this->assertInstanceOf('\\PSRedis\\Client', $master, 'The master returned should be a \\PSRedis\\Client instance');
+        $this->assertInstanceOf('\\RedisGuard\\Client', $master, 'The master returned should be a \\RedisGuard\\Client instance');
     }
 
     public function testThatTheRoleIsAlwaysSentinel()
@@ -36,4 +36,3 @@ class NullClientAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(null, $clientAdapter->set('test', 'ok'), 'Test that command is not proxied (not important in null adapter)');
     }
 }
- 

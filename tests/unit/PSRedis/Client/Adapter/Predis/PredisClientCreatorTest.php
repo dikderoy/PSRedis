@@ -4,7 +4,7 @@
 namespace PSRedis\Client\Adapter\Predis;
 
 
-use PSRedis\Client;
+use RedisGuard\Client;
 
 class PredisClientCreatorTest extends \PHPUnit_Framework_TestCase
 {
@@ -15,7 +15,7 @@ class PredisClientCreatorTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(
             '\\Predis\\Client',
             $clientFactory->createClient(Client::TYPE_SENTINEL, array()),
-            'Verify that sentinel clients created are of type \\PSRedis\\Client'
+            'Verify that sentinel clients created are of type \\RedisGuard\\Client'
         );
     }
 
@@ -46,7 +46,7 @@ class PredisClientCreatorTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(
             '\\Predis\\Client',
             $clientFactory->createClient(Client::TYPE_REDIS),
-            'Verify that redis clients created are of type \\PSRedis\\Client'
+            'Verify that redis clients created are of type \\RedisGuard\\Client'
         );
     }
 
@@ -62,10 +62,9 @@ class PredisClientCreatorTest extends \PHPUnit_Framework_TestCase
 
     public function testThatAnExceptionIsThrownForInvalidClientTypes()
     {
-        $this->setExpectedException('\\PSRedis\\Exception\\ConfigurationError', 'To create a client, you need to provide a valid client type');
+        $this->setExpectedException('\\RedisGuard\\Exception\\ConfigurationError', 'To create a client, you need to provide a valid client type');
 
         $clientFactory = new PredisClientCreator();
         $clientFactory->createClient('boe');
     }
 }
- 

@@ -2,8 +2,9 @@
 
 namespace PSRedis\Client\Adapter;
 
-use PSRedis\Client\ClientAdapter;
-use PSRedis\Client;
+use RedisGuard\Adapter\AbstractClientAdapter;
+use RedisGuard\Adapter\IClientAdapter;
+use RedisGuard\Client;
 
 /**
  * Class NullSentinelClientAdapter
@@ -16,7 +17,7 @@ use PSRedis\Client;
  */
 class NullClientAdapter
     extends AbstractClientAdapter
-    implements ClientAdapter
+    implements IClientAdapter
 {
 
     public function connect()
