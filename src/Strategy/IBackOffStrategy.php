@@ -4,9 +4,9 @@
 namespace RedisGuard\Strategy;
 
 /**
- * Interface BackoffStrategy
+ * Interface BackOffStrategy
  *
- * Implements logic to decide on whether we should try again after a backoff and how long to backoff
+ * Implements logic to decide on whether we should try again after a back-off and how long to back-off
  *
  * @package PSRedis\MasterDiscovery
  */

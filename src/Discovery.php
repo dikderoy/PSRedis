@@ -6,16 +6,14 @@
 
 namespace RedisGuard;
 
-use PSRedis\MasterDiscovery;
 use RedisGuard\Exception\ConfigurationError;
 use RedisGuard\Exception\ConnectionError;
-use RedisGuard\Exception\RoleError;
 use RedisGuard\Exception\SentinelError;
 use RedisGuard\Strategy\IBackOffStrategy;
 use RedisGuard\Strategy\NoBackOff;
 use SplFixedArray;
 
-class Discovery extends MasterDiscovery
+class Discovery
 {
 	const MODE_ANY = 0;
 	const MODE_RW  = 1;
@@ -128,30 +126,43 @@ class Discovery extends MasterDiscovery
 		$cluster = $this->getName();
 		$this->strategy->reset();
 		do {
-			try {
-				foreach ($sentinels as $sentinel) {
-					/** @var $sentinel Client */
-					try {
-						$sentinel->connect();
-						$node = ($mode > self::MODE_ANY)
-							? $sentinel->getMaster($cluster)
-							: $sentinel->getSlave($cluster);
-						if (empty($node))
-							continue;
-						if ($mode > self::MODE_ANY && $node->isMaster())
-							return $node;
-						if ($mode <= self::MODE_ANY && $node->isSlave())
-							return $node;
-						throw new RoleError('Cant find node with requested role');
-					} catch (ConnectionError $e) {
-						// on error, try to connect to next sentinel
-					} catch (SentinelError $e) {
-						// when the sentinel throws an error, we try the next sentinel in the set
+			foreach ($sentinels as $sentinel) {
+				/** @var $sentinel Client */
+				try {
+					$sentinel->connect();
+					switch ($mode) {
+						case self::MODE_ANY: {
+							$node = $sentinel->getMaster($cluster);
+							try {
+								$node->isMaster();
+							} catch (ConnectionError $e) {
+								$node = $sentinel->getSlave($cluster);
+							}
+							break;
+						}
+						case self::MODE_RW: {
+							$node = $sentinel->getMaster($cluster);
+							break;
+						}
+						case self::MODE_RO: {
+							$node = $sentinel->getSlave($cluster);
+							break;
+						}
 					}
+					if (empty($node)) //actually it is never true - we get ConnectionError
+						continue;
+					if ($mode >= self::MODE_ANY && $node->isMaster())
+						return $node;
+					if ($mode <= self::MODE_ANY && $node->isSlave())
+						return $node;
+					break; //if we didn't get expected role - we use backOff strategy to wait and try again
+				} catch (ConnectionError $e) {
+					// on error, try to connect to next sentinel
+				} catch (SentinelError $e) {
+					// when the sentinel throws an error, we try the next sentinel in the set
 				}
-			} catch (RoleError $e) {
-				//if we did not get node with desired role we just try again
 			}
+			//in cause of failures - we use strategy to wait
 			if ($this->strategy->shouldWeTryAgain()) {
 				$backOffInMicroseconds = $this->strategy->getBackOffInMicroSeconds();
 				if (!empty($this->backOffObserver)) {
@@ -160,7 +171,6 @@ class Discovery extends MasterDiscovery
 				usleep($backOffInMicroseconds);
 			}
 		} while ($this->strategy->shouldWeTryAgain());
-
 		throw new ConnectionError('All sentinels are unreachable');
 	}
 }

@@ -3,13 +3,13 @@
 
 namespace RedisGuard\Strategy;
 
-use RedisGuard\Exception\InvalidProperty;
+use RedisGuard\Exception\ConfigurationError;
 
 /**
  * Class IncrementalBackOff
  *
- * Implements incremental backoff logic.  By changing the initial backoff and multiplier, the backoff can be choosen in
- * a very flexible way.  Bad configuration could lead to infinite loops though, so be carefull on what kind of logic you
+ * Implements incremental back-off logic.  By changing the initial back-off and multiplier, the back-off can be chosen in
+ * a very flexible way.  Bad configuration could lead to infinite loops though, so be careful on what kind of logic you
  * implement
  *
  * @package RedisGuard\Client\BackoffStrategy
@@ -17,47 +17,47 @@ use RedisGuard\Exception\InvalidProperty;
 class IncrementalBackOff implements IBackOffStrategy
 {
 	/**
-	 * The initial backoff in microseconds
+	 * The initial back-off in microseconds
 	 * @var int
 	 */
-	private $initialBackoff;
+	protected $initialBackOff;
 	/**
-	 * The number to multiply the previous backoff with on each backoff.
+	 * The number to multiply the previous back-off with on each back-off.
 	 * @var float
 	 */
-	private $backoffMultiplier;
+	protected $backOffMultiplier;
 	/**
-	 * Holds the next backoff value
+	 * Holds the next back-off value
 	 * @var float
 	 */
-	private $nextBackoff;
+	protected $nextBackOff;
 	/**
-	 * The maximum number of attempts to take before we don't backoff anymore
+	 * The maximum number of attempts to take before we don't back-off anymore
 	 * @var bool|int
 	 */
-	private $maxAttempts = false;
+	protected $maxAttempts = false;
 	/**
 	 * The number of attempts that were already made
 	 * @var int
 	 */
-	private $attempts = 0;
+	protected $attempts = 0;
 
-	public function __construct($initialBackoff, $backoffMultiplier)
+	public function __construct($initialBackOff, $backOffMultiplier)
 	{
-		$this->guardThatBackoffIsNotNegative($initialBackoff);
-
-		$this->initialBackoff    = $initialBackoff;
-		$this->backoffMultiplier = $backoffMultiplier;
+		if ($initialBackOff < 0)
+			throw new ConfigurationError('The initial back off cannot be smaller than zero');
+		$this->initialBackOff    = $initialBackOff;
+		$this->backOffMultiplier = $backOffMultiplier;
 		$this->reset();
 	}
 
 	/**
-	 * Resets the state of the backoff implementation.  Should be used when engaging in a logically different master
+	 * Resets the state of the back-off implementation.  Should be used when engaging in a logically different master
 	 * discovery or reconnection attempt
 	 */
 	public function reset()
 	{
-		$this->nextBackoff = $this->initialBackoff;
+		$this->nextBackOff = $this->initialBackOff;
 		$this->attempts    = 0;
 	}
 
@@ -74,28 +74,14 @@ class IncrementalBackOff implements IBackOffStrategy
 	 */
 	public function getBackOffInMicroSeconds()
 	{
-		$currentBackoff = $this->nextBackoff;
-		$this->nextBackoff *= $this->backoffMultiplier;
+		$currentBackOff = $this->nextBackOff;
+		$this->nextBackOff *= $this->backOffMultiplier;
 		$this->attempts += 1;
-		return $currentBackoff;
+		return $currentBackOff;
 	}
 
 	/**
-	 * Validator for the initial backoff
-	 *
-	 * @param $initialBackoff
-	 *
-	 * @throws \RedisGuard\Exception\InvalidProperty
-	 */
-	private function guardThatBackoffIsNotNegative($initialBackoff)
-	{
-		if ($initialBackoff < 0) {
-			throw new InvalidProperty('The initial backoff cannot be smaller than zero');
-		}
-	}
-
-	/**
-	 * Verifies if we should stop trying to discover the master or backoff and try again
+	 * Verifies if we should stop trying to discover the master or back-off and try again
 	 * @return bool
 	 */
 	public function shouldWeTryAgain()

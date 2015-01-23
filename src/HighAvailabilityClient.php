@@ -5,6 +5,7 @@ namespace RedisGuard;
 
 use RedisGuard\Exception\ConnectionError;
 use RedisGuard\Exception\ReadOnlyError;
+use RedisGuard\Strategy\ICallStrategy;
 
 /**
  * Class HighAvailabilityClient
@@ -22,7 +23,7 @@ class HighAvailabilityClient
 	/**
 	 * @var string how tolerate connection hangups
 	 */
-	protected $tolerance;
+	protected $tolerance = self::READ_WRITE;
 	/**
 	 * Holds all configuration to the sentinels to execute the master discovery process
 	 * @var Discovery
@@ -33,14 +34,32 @@ class HighAvailabilityClient
 	 * @var Client
 	 */
 	protected $node;
+	/**
+	 * strategy to execute call to node
+	 *
+	 * @var ICallStrategy
+	 */
+	protected $strategy;
 
 	/**
-	 * @param Discovery $discovery
-	 * @param int       $tolerance how tolerate connections on hangup
+	 * @param Discovery     $discovery
+	 * @param ICallStrategy $callStrategy
+	 *
+	 * @internal param int $tolerance how tolerate connections on hangup
 	 */
-	public function __construct(Discovery $discovery, $tolerance = self::READ_WRITE)
+	public function __construct(Discovery $discovery, ICallStrategy $callStrategy)
 	{
 		$this->discovery = $discovery;
+		$this->strategy  = $callStrategy;
+	}
+
+	/**
+	 * set connection tolerance - whatever to acquire master or be satisfied with slave
+	 *
+	 * @param string $tolerance - self::READ_WRITE || self::CAN_READ
+	 */
+	public function setTolerance($tolerance)
+	{
 		$this->tolerance = $tolerance;
 	}
 
@@ -86,10 +105,12 @@ class HighAvailabilityClient
 			return $this->proxyCallToNode($method, $arguments);
 		} catch (ReadOnlyError $e) {
 			// retry proxying the function only once.  When back-off is needed, it should be implemented in the Discovery object
+			//in cause then we fall & get read only error - try to get master & repeat
 			$this->node = $this->discovery->getMaster();
 			return $this->proxyCallToNode($method, $arguments);
 		} catch (ConnectionError $e) {
-			if($this->tolerance > self::CAN_READ)
+			//if operation does not require master - get slave to work properly
+			if ($this->tolerance > self::CAN_READ)
 				throw $e;
 			$this->node = $this->discovery->getSlave();
 			return $this->proxyCallToNode($method, $arguments);
@@ -104,8 +125,8 @@ class HighAvailabilityClient
 	 *
 	 * @return mixed
 	 */
-	private function proxyCallToNode($name, array $arguments)
+	protected function proxyCallToNode($name, array $arguments)
 	{
-		return call_user_func_array(array($this->node, $name), $arguments);
+		return $this->strategy->proxyCall([$this->node, $name], $arguments);
 	}
 }
