@@ -5,6 +5,7 @@ namespace RedisGuard;
 
 use RedisGuard\Exception\ConnectionError;
 use RedisGuard\Exception\ReadOnlyError;
+use RedisGuard\Strategy\DefaultCallStrategy;
 use RedisGuard\Strategy\ICallStrategy;
 
 /**
@@ -42,14 +43,14 @@ class HighAvailabilityClient
 	protected $strategy;
 
 	/**
-	 * @param Discovery     $discovery
-	 * @param ICallStrategy $callStrategy
-	 *
-	 * @internal param int $tolerance how tolerate connections on hangup
+	 * @param Discovery          $discovery
+	 * @param ICallStrategy|null $callStrategy
 	 */
-	public function __construct(Discovery $discovery, ICallStrategy $callStrategy)
+	public function __construct(Discovery $discovery, ICallStrategy $callStrategy = null)
 	{
 		$this->discovery = $discovery;
+		if (!$callStrategy)
+			$callStrategy = new DefaultCallStrategy();
 		$this->strategy  = $callStrategy;
 	}
 
