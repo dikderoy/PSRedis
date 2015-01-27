@@ -1,18 +1,6 @@
-# Redis Guard - redis client wrapper for PHP, providing sentinel operations & connection fallback
+# Redis Guard
 
-A PHP client for redis sentinel connections as a wrapper on other redis clients.
-
-## Installation
-
-The easiest way to install is by using composer.
-The package will soon be available on [packagist](https://packagist.org/packages/sparkcentral/predis-sentinel),
-so installing should be as easy as putting the following in your composer file:
-
-```json
-"require": {
-    "dikderoy/redis-guard": "*"
-},
-```
+redis client wrapper for PHP, providing sentinel operations & connection fallback
 
 ## Why Fork?
 
@@ -26,6 +14,18 @@ Code Style is much more consistent and clear. General refactoring done. Architec
 
 **IMPORTANT** This fork **IS NOT** compatible with original library!
 
+## Installation
+
+The easiest way to install is by using composer.
+The package will soon be available on [packagist](https://packagist.org/packages/sparkcentral/predis-sentinel),
+so installing should be as easy as putting the following in your composer file:
+
+```json
+"require": {
+    "dikderoy/redis-guard": "*"
+},
+```
+
 ## Usage
 
 ### Basic example
@@ -35,7 +35,8 @@ Unlike original library no defaults assumed inside.
 This is the least amount of code needed to get your app talk to Redis using pure php
 (only commands needed for simple key-value cache are implemented).
 
-make sure you required dikderoy/redis-guard-pure-php package in composer - so client implementation & adapter is available in runtime
+make sure you required `dikderoy/redis-guard-pure-php` package in composer,
+so client implementation & adapter is available in runtime
 
 ```php
 // configure where to find the sentinel nodes
